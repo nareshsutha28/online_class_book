@@ -24,3 +24,9 @@ class User(AbstractUser):
 
     def __str__(self):
       return "{}".format(self.email)
+
+
+class TeacherProfile(models.Model):
+   
+   user = models.OneToOneField(User, related_name="teacher_profile", on_delete=models.CASCADE)
+   subject = models.CharField(max_length=20)
