@@ -1,10 +1,9 @@
 from rest_framework.generics import GenericAPIView
-from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from user.models import User
-from slot_booking.models import TeacherAvailabilitySlot
-from slot_booking.serializers import TeacherAvailabilitySlotSerializer, AvailableSlotForStudent
+from slot_booking.models import TeacherAvailabilitySlot, SlotBooking
+from slot_booking.serializers import TeacherAvailabilitySlotSerializer, AvailableSlotForStudent, SlotBookingForStudentSerializer
 from online_class_book.utils import get_response
 from rest_framework.pagination import PageNumberPagination
 from django.utils.timezone import now
@@ -128,3 +127,50 @@ class StudentTeacherSlotsAPIView(GenericAPIView):
 
         # Return the paginated response with serialized data
         return self.get_paginated_response(serializer.data)
+
+
+class BookSlotAPIView(GenericAPIView):
+    """
+    API for students to book a teacher's slot.
+    Validates that the user is a student and that the slot is available.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """
+        Handle the booking of a slot by a student.
+        """
+        # Ensure the user is a student
+        if request.user.role != User.UserRole.STUDENT:
+            return get_response(status.HTTP_403_FORBIDDEN, "You do not have permission to book a slot.", {})
+        
+        # Extract relevant data from request
+        slot_id = request.data.get("slot_id")
+        print(slot_id)
+
+        # Check if the teacher's slot exists
+        slot_object = TeacherAvailabilitySlot.objects.select_related('teacher',
+                                                                    'teacher__teacher_profile').filter(id = slot_id).first()
+
+        if not slot_object:
+            return get_response(status.HTTP_400_BAD_REQUEST, "The slot does not exist.", {})
+        
+        # Check if the student has already booked a slot with the same teacher for the same date
+        if SlotBooking.objects.select_related('slot').filter(student=request.user, slot__teacher=slot_object.teacher, slot__start_time__date=slot_object.start_time.date()).exists():
+            return get_response(status.HTTP_400_BAD_REQUEST, "You have already booked a slot with this teacher for the same date.", {})
+        
+        # Check if the student has already booked a slot for the same time range
+        if SlotBooking.objects.select_related('slot').filter(student=request.user, slot__start_time__lt=slot_object.end_time, slot__end_time__gt=slot_object.start_time).exists():
+            return get_response(status.HTTP_400_BAD_REQUEST, "You have already booked a slot for this time range.", {})
+
+        # If validation passes, create the booking
+        slot_booking = SlotBooking.objects.create(
+            student=request.user,
+            slot=slot_object,
+        )
+        
+        # Serialize the slot booking data
+        serializer = SlotBookingForStudentSerializer(slot_booking)
+        
+        # Return a success response with the booking data
+        return get_response(status.HTTP_201_CREATED, "Slot booked successfully!", serializer.data)

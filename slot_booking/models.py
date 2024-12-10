@@ -14,6 +14,5 @@ class TeacherAvailabilitySlot(models.Model):
 # Model for Slot Booking
 class SlotBooking(models.Model):
     student = models.ForeignKey(User, related_name="booked_slots", on_delete=models.CASCADE)
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
+    slot = models.ForeignKey(TeacherAvailabilitySlot, related_name="bookings", on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

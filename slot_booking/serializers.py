@@ -74,3 +74,13 @@ class AvailableSlotForStudent(serializers.ModelSerializer):
         model = TeacherAvailabilitySlot
         fields = ['id', 'teacher', 'start_time', 'end_time', 'subject', 'created_at']
         read_only_fields = ['created_at']
+
+
+class SlotBookingForStudentSerializer(serializers.ModelSerializer):
+
+    slot = AvailableSlotForStudent(many=False)
+
+    class Meta:
+        model = TeacherAvailabilitySlot
+        fields = ['id', 'slot', 'created_at']
+        read_only_fields = ['created_at']
