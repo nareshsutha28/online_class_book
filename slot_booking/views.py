@@ -91,6 +91,14 @@ class StudentTeacherSlotsAPIView(GenericAPIView):
         subject = request.query_params.get("subject", None)  # Filter by subject
         date = request.query_params.get("date", None)  # Filter by start_date
 
+        # Check if the user is a teacher
+        if request.user.role != User.UserRole.STUDENT:
+            return get_response(
+                status.HTTP_403_FORBIDDEN,
+                "You do not have permission to requested endpoint.",
+                {}
+            )
+
         # Filter teacher slots
         slots_queryset = TeacherAvailabilitySlot.objects.select_related('teacher').filter(
             start_time__gt=now()  # Only future slots
