@@ -1,6 +1,6 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from user.models import User
 from slot_booking.models import TeacherAvailabilitySlot, SlotBooking
 from slot_booking.serializers import TeacherAvailabilitySlotSerializer, AvailableSlotForStudent, SlotBookingForStudentSerializer
@@ -204,3 +204,63 @@ class BookSlotAPIView(GenericAPIView):
         
         # Return a success response with the booking data
         return get_response(status.HTTP_201_CREATED, "Slot booked successfully!", serializer.data)
+
+
+class DefaultSlotBookApiView(GenericAPIView):
+    """
+    API to automatically book default slots for students should run code at the starting of the day.
+    Ensures each student attends all teacher classes without conflicts or repetition.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """
+        Automatically book slots for students who haven't attended all teacher classes today.
+        """
+        today = now().date()
+
+        # Get the list of teachers who have available slots today
+        available_teachers = list(
+            TeacherAvailabilitySlot.objects.filter(
+                start_time__date=today
+            ).distinct('teacher').values_list('teacher', flat=True)
+        )
+        print("available_teachers ", available_teachers)
+
+        # Fetch all students
+        students = User.objects.filter(role=User.UserRole.STUDENT)
+        print("students ", students)
+
+        for student in students:
+            # Get slots already booked by the student for today
+            booked_slots_today = student.booked_slots.filter(slot__start_time__date=today)
+
+            # Skip the student if they have already booked slots for all available teachers
+            if len(available_teachers) == booked_slots_today.count():
+                continue
+
+            # Iterate over available teachers and book slots
+            for teacher_id in available_teachers:
+                # Skip if the student already has a slot for this teacher
+                if booked_slots_today.filter(slot__teacher__id=teacher_id).exists():
+                    continue
+
+                # Get available slots for the teacher today
+                available_teacher_slots = TeacherAvailabilitySlot.objects.filter(
+                    teacher__id=teacher_id,
+                    start_time__date=today
+                )
+
+                # Book the first non-conflicting slot for the student
+                for slot in available_teacher_slots:
+                    if not booked_slots_today.filter(
+                        slot__start_time__lt=slot.end_time,
+                        slot__end_time__gt=slot.start_time
+                    ).exists():
+                        # Create the booking
+                        SlotBooking.objects.create(student=student, slot=slot)
+                        booked_slots_today = student.booked_slots.filter(slot__start_time__date=today)
+                        break  # Move to the next teacher
+
+        # Return a success response
+        return get_response(status.HTTP_201_CREATED, "Default slots booked successfully!", {})
