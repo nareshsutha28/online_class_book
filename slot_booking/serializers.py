@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.utils.timezone import now
-from .models import TeacherAvailabilitySlot
+from slot_booking.models import TeacherAvailabilitySlot
+from user.serializers import UserSerializer
 
 
 class TeacherAvailabilitySlotSerializer(serializers.ModelSerializer):
@@ -55,3 +56,21 @@ class TeacherAvailabilitySlotSerializer(serializers.ModelSerializer):
         self.validate_slot_overlap(teacher, start_time, end_time)
 
         return data
+
+
+class AvailableSlotForStudent(serializers.ModelSerializer):
+    
+    # Define start_time and end_time with custom input and output formats
+    start_time = serializers.DateTimeField(
+        format="%Y-%m-%d %H:%M"  # Output format
+    )
+    end_time = serializers.DateTimeField(
+        format="%Y-%m-%d %H:%M"  # Output format
+    )
+    teacher = UserSerializer(many=False)
+    subject = serializers.CharField(source='teacher.teacher_profile.subject', read_only=True)
+
+    class Meta:
+        model = TeacherAvailabilitySlot
+        fields = ['id', 'teacher', 'start_time', 'end_time', 'subject', 'created_at']
+        read_only_fields = ['created_at']
