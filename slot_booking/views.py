@@ -21,11 +21,29 @@ class TeacherSlotAPIView(GenericAPIView):
         """
         Retrieve all upcoming availability slots for the authenticated teacher.
         """
+        date = request.query_params.get("date", None)  # Filter by start_date
+
+        # Check if the user is a teacher
+        if request.user.role != User.UserRole.TEACHER:
+            return get_response(
+                status.HTTP_403_FORBIDDEN,
+                "You do not have permission to this endpoint.",
+                {}
+            )
+
         # Filter future availability slots for the teacher and order by start_time
         slot_queryset = TeacherAvailabilitySlot.objects.filter(
             teacher=request.user,
             start_time__gt=now()  # Only include slots starting after the current time
         ).order_by('start_time')
+
+        if date:
+            try: 
+                date = datetime.strptime(date, "%Y-%m-%d").date()
+            except:
+                return get_response(status.HTTP_400_BAD_REQUEST, "Please Pass Valid Date Params in 'YYYY-MM-DD' format", {})
+
+            slot_queryset = slot_queryset.filter(start_time__date=date)
 
         # Paginate the queryset
         slots = self.paginate_queryset(slot_queryset)
