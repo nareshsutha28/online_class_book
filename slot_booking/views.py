@@ -135,7 +135,37 @@ class BookSlotAPIView(GenericAPIView):
     Validates that the user is a student and that the slot is available.
     """
     permission_classes = [IsAuthenticated]
-    
+
+    def get(self, request):
+        
+        date = request.query_params.get("date", None)
+
+        user_object = request.user
+        if user_object.role != User.UserRole.STUDENT:
+            return get_response(status.HTTP_403_FORBIDDEN, "You do not have permission to this endpoint.", {})
+        
+        booked_slot_queryset = user_object.booked_slots.filter(
+            slot__start_time__gt = now()
+        ).order_by('slot__start_time')
+
+        if date:
+            try: 
+                date = datetime.strptime(date, "%Y-%m-%d").date()
+            except:
+                return get_response(status.HTTP_400_BAD_REQUEST, "Please Pass Valid Date Params in 'YYYY-MM-DD' format", {})
+
+            booked_slot_queryset = booked_slot_queryset.filter(slot__start_time__date = date)
+
+        # Paginate the queryset
+        slots = self.paginate_queryset(booked_slot_queryset)
+
+        # Serialize the paginated slots
+        serializer = SlotBookingForStudentSerializer(slots, many=True)
+
+        # Return the paginated response with serialized data
+        return self.get_paginated_response(serializer.data)
+
+
     def post(self, request):
         """
         Handle the booking of a slot by a student.
