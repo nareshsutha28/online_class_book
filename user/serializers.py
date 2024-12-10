@@ -5,7 +5,8 @@ from user.models import User, TeacherProfile
 
 class UserSerializer(serializers.ModelSerializer):
     
-    subject = serializers.CharField(max_length=20)
+    # For Subject Field For Teacher
+    subject = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
@@ -15,6 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
+
         # Create the user with the provided data
         user = User.objects.create(
             email=validated_data['email'],
@@ -31,7 +33,6 @@ class UserSerializer(serializers.ModelSerializer):
                 user = user,
                 subject = validated_data['subject'] 
             )
-
         return user
 
     def validate_phone(self, value):
