@@ -14,10 +14,11 @@ class TeacherAvailabilitySlotSerializer(serializers.ModelSerializer):
         input_formats=["%Y-%m-%d %H:%M"],  # Input format
         format="%Y-%m-%d %H:%M"  # Output format
     )
+    reserved_students = serializers.SerializerMethodField()
 
     class Meta:
         model = TeacherAvailabilitySlot
-        fields = ['id', 'teacher', 'start_time', 'end_time', 'created_at']
+        fields = ['id', 'teacher', 'start_time', 'end_time', 'reserved_students', 'created_at']
         read_only_fields = ['created_at']
 
     def validate_start_time_and_end_time(self, start_time, end_time):
@@ -56,6 +57,14 @@ class TeacherAvailabilitySlotSerializer(serializers.ModelSerializer):
         self.validate_slot_overlap(teacher, start_time, end_time)
 
         return data
+
+    def get_reserved_students(self, obj):
+        booked_slots = obj.bookings.all()
+        student_list = []
+        for slot in booked_slots:
+            student_list.append(UserSerializer(slot.student).data)
+
+        return student_list
 
 
 class AvailableSlotForStudent(serializers.ModelSerializer):

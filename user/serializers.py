@@ -23,6 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
             age=validated_data['age'],
+            phone=validated_data['phone'],
             role=validated_data['role']
         )
         user.set_password(validated_data['password'])
