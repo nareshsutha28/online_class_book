@@ -31,3 +31,37 @@ jobs:
       - name: Run tests
         run: |
           python manage.py test  # Run the Django tests
+
+  # Job for deployment to production (if needed)
+  deploy:
+    runs-on: ubuntu-latest  # Environment for the deployment job
+    needs: test  # This job runs only after the test job has completed
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+    
+      # Step 2: Set up SSH access
+      - name: Set up SSH
+        run: |
+          echo "${{ online-class-env.AWS_SECRETE }}" | base64 -d > key.pem
+          chmod 600 key.pem
+
+      - name: Deploy to Production
+        run: |
+          # Example: Deploy to Heroku (requires HEROKU_API_KEY and HEROKU_APP_NAME as secrets)
+          ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@3.111.36.106 << 'EOF'
+            cd /home/online_class_book
+            source /venv/bin/activate
+            cd online_class_book
+            git pull origin main
+            pip3 install -r requirements.txt
+            python3 manage.py makemigrations
+            python3 manage.py migrate
+          EOF
+        
+      # Step 4: Clean up sensitive files
+      - name: Clean up
+        run: rm -f key.pem
