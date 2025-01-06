@@ -46,7 +46,7 @@ jobs:
       # Step 2: Set up SSH access
       - name: Set up SSH
         run: |
-          echo "${{ online-class-env.AWS_SECRETE }}" | base64 -d > key.pem
+          echo "${{ vars.AWS_SECRETE }}" | base64 -d > key.pem
           chmod 600 key.pem
 
       - name: Deploy to Production
