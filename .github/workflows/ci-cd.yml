@@ -47,9 +47,7 @@ jobs:
       - name: Set up SSH
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}"
-          echo "${{ secrets.AWS_SECRETE }}" > key.pem
-          
-          cat key.pem
+          echo "${{ secrets.MY_SECRETE }}" > key.pem
           chmod 400 key.pem
 
       - name: Deploy to Production
