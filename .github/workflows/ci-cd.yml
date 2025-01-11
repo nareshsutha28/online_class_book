@@ -46,8 +46,11 @@ jobs:
       # Step 2: Set up SSH access
       - name: Set up SSH
         run: |
+          echo "${{ secrets.GITHUB_TOKEN }}"
           echo "${{ secrets.AWS_SECRETE }}" > key.pem
-          chmod 600 key.pem
+          
+          cat key.pem
+          chmod 400 key.pem
 
       - name: Deploy to Production
         run: |
