@@ -58,9 +58,9 @@ jobs:
             source /venv/bin/activate
             cd online_class_book
             git pull origin main
-            pip3 install -r requirements.txt
-            python3 manage.py makemigrations
-            python3 manage.py migrate
+            pip install -r requirements.txt
+            python manage.py makemigrations
+            python manage.py migrate
           EOF
         
       # Step 4: Clean up sensitive files
