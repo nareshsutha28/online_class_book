@@ -46,7 +46,6 @@ jobs:
       # Step 2: Set up SSH access
       - name: Set up SSH
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}"
           echo "${{ secrets.MY_SECRETE }}" > key.pem
           chmod 400 key.pem
 
