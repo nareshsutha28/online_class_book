@@ -52,7 +52,7 @@ jobs:
       - name: Deploy to Production
         run: |
           # Example: Deploy to Heroku (requires HEROKU_API_KEY and HEROKU_APP_NAME as secrets)
-          ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@13.235.71.141 << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@13.233.151.77 << 'EOF'
             cd /home/online_class_book
             source /venv/bin/activate
             cd online_class_book
