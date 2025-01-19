@@ -53,14 +53,13 @@ jobs:
         run: |
           # Example: Deploy to Heroku (requires HEROKU_API_KEY and HEROKU_APP_NAME as secrets)
           ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@13.233.151.77 << 'EOF'
-            cd /home/online_class_book
-            ll
-            source /venv/bin/activate
-            cd online_class_book
+            set -x
+            source /home/online_class_book/venv/bin/activate
+            cd /home/online_class_book/online_class_book
             git pull origin main
-            pip install -r requirements.txt
-            python manage.py makemigrations
-            python manage.py migrate
+            pip3 install -r requirements.txt
+            python3 manage.py makemigrations
+            python3 manage.py migrate
           EOF
         
       # Step 4: Clean up sensitive files
